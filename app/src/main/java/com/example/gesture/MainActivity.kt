@@ -23,8 +23,17 @@ import androidx.compose.foundation.background
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.gestures.rememberDraggableState
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.unit.IntOffset
+
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -35,11 +44,47 @@ class MainActivity : ComponentActivity() {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                   //PointerEvents()
                     Tap()
+                    Drag_Horizontal()
+                    Drag_Vertical()
+                    Ghost()
                 }
             }
         }
     }
 }
+
+@Composable
+fun Drag_Vertical() {
+    var offsetY by remember { mutableStateOf(0f) }
+    Text(
+        text = "垂直拖曳",
+        modifier = Modifier
+            .offset { IntOffset(600, offsetY.toInt() + 100) }
+            .draggable(
+                orientation= Orientation.Vertical,
+                state = rememberDraggableState{ delta ->
+                    offsetY += delta
+                }
+            )
+    )
+}
+
+@Composable
+fun Drag_Horizontal() {
+    var offsetX by remember { mutableStateOf(0f) }
+    Text(
+        text = "水平拖曳",
+        modifier = Modifier
+            .offset { IntOffset(offsetX.toInt(), 225) }
+            .draggable(
+                orientation= Orientation.Horizontal,
+                state = rememberDraggableState{ delta ->
+                    offsetX += delta
+                }
+            )
+    )
+}
+
 @Composable
 fun PointerEvents() {
     var msg by remember { mutableStateOf("作者：Emma") }
@@ -60,10 +105,22 @@ fun PointerEvents() {
         )
     }
 }
+
 @Composable
 fun Tap() {
     var msg by remember { mutableStateOf("TAP相關手勢實例") }
     var count by remember { mutableStateOf (0) }
+    var offset1 by remember { mutableStateOf(Offset.Zero) }
+    var offset2 by remember { mutableStateOf(Offset.Zero) }
+
+    var PU = arrayListOf(R.drawable.pu0, R.drawable.pu1,
+        R.drawable.pu2, R.drawable.pu3,
+        R.drawable.pu4, R.drawable.pu5)
+    var Number by remember { mutableStateOf(2) }
+
+
+
+
     Column {
         Text("\n" + msg +"\n計數:" + count.toString(),
                 modifier = Modifier.pointerInput(Unit){
@@ -72,8 +129,36 @@ fun Tap() {
                     )
         }
         )
+
+        Box(modifier=Modifier
+            .background(Color.Red)
+            .fillMaxWidth()
+            .pointerInput(Unit) {
+                detectDragGesturesAfterLongPress(
+                    onDrag = { change, dragAmount -> offset2+=dragAmount},
+                    onDragStart = {offset1 = it
+                        offset2 = it },
+                    onDragEnd = {//msg="從" + offset1.toString() + "拖曳到" + offset2.toString()
+                        if (offset2.x >= offset1.x){
+                            msg = "長按後向右拖曳"
+                            Number ++
+                            if (Number>5){Number=0}
+                        }
+                        else{
+                            msg = "長按後向左拖曳"
+                            Number --
+                            if (Number<0){Number=5}
+                        }
+                    }
+                )
+            }
+
+        ){
+            Text("")
+        }
+
         Image(
-            painter = painterResource(id = R.drawable.pu0),
+            painter = painterResource(id = PU[(Number)]),
             contentDescription = "靜宜之美",
             modifier = Modifier
                 .fillMaxSize()
@@ -91,6 +176,24 @@ fun Tap() {
 
         )
     }
+}
+@Composable
+fun Ghost() {
+    Image(
+
+        painter = painterResource(id = R.drawable.ghost1),
+    contentDescription = "精靈",
+    modifier = Modifier
+        .offset { IntOffset(800,200)}
+    )
+
+    Image(
+        painter = painterResource(id = R.drawable.ghost1),
+    contentDescription = "精靈1",
+    modifier = Modifier
+        .offset { IntOffset(300,800)}
+    )
+
 }
 
 @Composable
